@@ -1,0 +1,8 @@
+{
+  "reviewed_at": "2026-09-07",
+  "status": "passed",
+  "method": "Rendered all PDFs to PNG at 1000-pixel maximum dimension and visually inspected all eight pages.",
+  "documents": {"D001": [1, 2], "D002": [1, 2, 3], "D003": [1, 2], "D004": [1]},
+  "checks": ["Chinese text legible", "Tables fit page width", "No clipped or overlapping text", "Page numbers match evidence locators", "Source line annotations visible"],
+  "scope": "Layout only; does not certify ingestion or evaluation correctness."
+}

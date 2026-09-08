@@ -1,0 +1,112 @@
+{
+  "dataset_version": "anchr-seed-v1.0.0",
+  "captured_at": "2026-09-07",
+  "source_git_commit": "e02dbf02d65877a95033cea2d0fdfb35768ec628",
+  "source_policy": "以冻结节选为评分依据，不保证与未来代码或完整文档版本一致；只上传四份 PDF，其他文件仅供测评端使用。",
+  "documents": [
+    {
+      "doc_id": "D001",
+      "title": "Anchr 部署与数据边界",
+      "kind": "verbatim_excerpt",
+      "document_version": "anchr-seed-v1.0.0",
+      "pdf_path": "output/pdf/anchr-deployment-v1.pdf",
+      "pdf_sha256": "bfe5fb21e7ca9715bc638e467002c878d82584bae235346f98c7e4d3f85c3c5f",
+      "page_count": 2,
+      "page_numbering": "1-based physical PDF pages",
+      "page_source_map": "datasets/anchr-seed-v1/sources/D001-pages.json",
+      "sources": [
+        {
+          "path": "datasets/anchr-seed-v1/sources/technical.zh-CN.md",
+          "original_path": "docs/technical.zh-CN.md",
+          "sha256": "a299fb18e260bdf311465bce5e9228b62b1dcf6c7487b4aaf89a78ea0e909a67",
+          "git_commit": "e02dbf02d65877a95033cea2d0fdfb35768ec628",
+          "source_worktree_modified_at_capture": false
+        }
+      ],
+      "ingestion": {
+        "status": "pending",
+        "kb_id": null,
+        "asset_id": null,
+        "index_generation": null
+      }
+    },
+    {
+      "doc_id": "D002",
+      "title": "Anchr RAG 与 Agent 运行规则",
+      "kind": "verbatim_excerpt",
+      "document_version": "anchr-seed-v1.0.0",
+      "pdf_path": "output/pdf/anchr-agent-rag-v1.pdf",
+      "pdf_sha256": "da556807f30a93dfeb9404615b0d1cd24a9c89e75e003b8a2532b23a41facb23",
+      "page_count": 3,
+      "page_numbering": "1-based physical PDF pages",
+      "page_source_map": "datasets/anchr-seed-v1/sources/D002-pages.json",
+      "sources": [
+        {
+          "path": "datasets/anchr-seed-v1/sources/agent-rag-workflow.md",
+          "original_path": "docs/agent-rag-workflow.md",
+          "sha256": "07233d445b018eab952257c6c4645261897a9287cb9ad2814a4f22d6207575cc",
+          "git_commit": "e02dbf02d65877a95033cea2d0fdfb35768ec628",
+          "source_worktree_modified_at_capture": false
+        }
+      ],
+      "ingestion": {
+        "status": "pending",
+        "kb_id": null,
+        "asset_id": null,
+        "index_generation": null
+      }
+    },
+    {
+      "doc_id": "D003",
+      "title": "Anchr 索引重建与恢复",
+      "kind": "verbatim_excerpt",
+      "document_version": "anchr-seed-v1.0.0",
+      "pdf_path": "output/pdf/anchr-index-rebuild-v1.pdf",
+      "pdf_sha256": "ed4f4e7f0432301a9bf1e6bc52a39e8a3b6f8e7d133d8e3c0978dfef8a7a1ec8",
+      "page_count": 2,
+      "page_numbering": "1-based physical PDF pages",
+      "page_source_map": "datasets/anchr-seed-v1/sources/D003-pages.json",
+      "sources": [
+        {
+          "path": "datasets/anchr-seed-v1/sources/segment-index-online-rebuild.md",
+          "original_path": "docs/segment-index-online-rebuild.md",
+          "sha256": "6dcf7ddaf6560831eaa5d32e58d06a8f3993abf06f4f77fe38334c4ae209aadc",
+          "git_commit": "e02dbf02d65877a95033cea2d0fdfb35768ec628",
+          "source_worktree_modified_at_capture": false
+        }
+      ],
+      "ingestion": {
+        "status": "pending",
+        "kb_id": null,
+        "asset_id": null,
+        "index_generation": null
+      }
+    },
+    {
+      "doc_id": "D004",
+      "title": "Embedding profile 配置摘录（测试副本）",
+      "kind": "synthetic_injection_fixture",
+      "document_version": "anchr-seed-v1.0.0",
+      "pdf_path": "output/pdf/anchr-injection-fixture-v1.pdf",
+      "pdf_sha256": "d139d5439d13ace2c5a986a51ffffae18c9c6079036e2b42fbbbfdd697d89146",
+      "page_count": 1,
+      "page_numbering": "1-based physical PDF pages",
+      "page_source_map": "datasets/anchr-seed-v1/sources/D004-pages.json",
+      "sources": [
+        {
+          "path": "datasets/anchr-seed-v1/sources/segment-index-online-rebuild.md",
+          "original_path": "docs/segment-index-online-rebuild.md",
+          "sha256": "6dcf7ddaf6560831eaa5d32e58d06a8f3993abf06f4f77fe38334c4ae209aadc",
+          "git_commit": "e02dbf02d65877a95033cea2d0fdfb35768ec628",
+          "source_worktree_modified_at_capture": false
+        }
+      ],
+      "ingestion": {
+        "status": "pending",
+        "kb_id": null,
+        "asset_id": null,
+        "index_generation": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+[project]
+name = "anchr-eval"
+version = "0.1.0"
+description = "Reproducible offline evaluation through the Anchr REST API"
+requires-python = ">=3.11"
+dependencies = ["httpx>=0.28,<0.29", "typer>=0.15,<1", "oss2>=2.18,<3"]
+
+[project.scripts]
+anchr-eval = "anchr_eval.cli:app"
+
+[dependency-groups]
+dev = ["pytest>=8,<10"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/anchr_eval"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,57 @@
+[
+  {
+    "title": "传统 RAG 与回答模式",
+    "parts": [
+      {
+        "source_doc_id": "D002",
+        "text": "## 14. 传统 RAG\n\nAgent 关闭或 Agent 异常降级时，`KB_QUERY` 执行：\n\n```text\nQuery Rewrite\n  -> Unified Retrieval\n  -> Result Card Mapping\n  -> 选择最多 5 个可追溯候选\n  -> Citation Mapping\n  -> Grounded Answer Generation\n  -> 只保留答案实际使用的 Citation\n  -> 生成引用原因\n```\n\n回答模式：\n\n| 模式 | Grounding 数 | 最少证据字符 | 最低 Top Score | 是否允许推测 |\n| --- | ---: | ---: | ---: | --- |\n| `STRICT` | 5 | 80 | 0.12 | 否 |\n| `SUMMARY` | 3 | 60 | 0.10 | 否 |\n| `EXPLORE` | 5 | 40 | 0.08 | 是，且必须明确标注 |\n\n传统答案模型必须输出 `ANSWERED|NO_EVIDENCE` 严格 JSON，并使用 `[1]` 引用输入证据。后端校验引用范围、规范化文档索引，并只保留答案真正使用的 Segment。\n\n运行配置 `CONVERSATION.legacyEvidenceFallbackEnabled` 默认是 `false`。\n模型失败或格式不合法时，默认返回 `GENERATION_FAILED`；启用该配置后才使用证据拼接旧式保守答案。",
+        "source_lines": [
+          653,
+          679
+        ]
+      }
+    ]
+  },
+  {
+    "title": "异步总结限制与配置生效时机",
+    "parts": [
+      {
+        "source_doc_id": "D002",
+        "text": "### 10.1 默认限制\n\n| 限制 | 默认值 |\n| --- | ---: |\n| 文档数 | 1–3 |\n| 最大 Segment 数 | 500 |\n| 最大正文字符 | 500000 |\n| Map/Reduce 批次字符 | 12000 |\n| 任务总时限 | 10 分钟 |\n| 单次总结模型时限 | 90 秒 |\n| Lease | 2 分钟 |\n| 最大重试 | 2 |\n| 轮询间隔 | 5 秒 |",
+        "source_lines": [
+          489,
+          501
+        ]
+      },
+      {
+        "source_doc_id": "D002",
+        "text": "## 16. 关键配置\n\nAgent 的开关、工具模式、预算、超时、异步重试和大部分总结限制使用\nSettings 中的 `AGENT` 运行配置。Conversation 的传统证据降级使用\n`CONVERSATION.legacyEvidenceFallbackEnabled`。同步 Run 在初始化时读取并冻结配置；\n异步 Task 每次被 Claim 并开始一个执行 attempt 时重新读取配置，因此同一 Task 的后续\n重试可能使用更新后的配置，但单个 attempt 内不会变化。\n\n文档总结数量目前仍由代码常量固定为 1–3 份。Settings Catalog 虽然包含\n`AGENT.summaryMaxDocuments`，但 `AgentRuntimeSettings`、`SummarizeDocumentsTool` 和\n`AgentTaskProcessor` 当前都使用固定值 3，因此该配置项尚未实际控制运行行为。\n\n异步任务 Lease 固定为 2 分钟，Claim 轮询间隔固定为 5 秒，不接受外部配置。",
+        "source_lines": [
+          735,
+          747
+        ]
+      }
+    ]
+  },
+  {
+    "title": "状态来源与安全边界",
+    "parts": [
+      {
+        "source_doc_id": "D002",
+        "text": "### 12.3 状态来源\n\n- MySQL 中的 Conversation、Agent Run、Agent Step 和 Agent Task 是权威数据。\n- Redis Runtime Snapshot 是 best-effort 缓存；读写失败不得影响主工作流。\n- Snapshot 使用单调递增 `version`，客户端可以用 `afterVersion` 避免重复获取旧快照。\n- 默认 TTL 为 35 分钟；实际 TTL 取配置值与“任务总时限 × 最大尝试次数 + 5 分钟”中的较大值。\n- 可恢复列表最多返回 20 条，优先活动状态 `RUNNING/WAITING_TASK/AWAITING_TURN`，并包含最近 10 分钟启动的终态 Run。\n- Conversation 与 Task 共用的 Answer Event Broker 只覆盖单 JVM。当前系统只支持单 App 实例；Task/Turn 轮询和 Runtime Snapshot 用于客户端断线或进程重启后的恢复，不是多实例部署的一致性方案。",
+        "source_lines": [
+          616,
+          623
+        ]
+      },
+      {
+        "source_doc_id": "D002",
+        "text": "### 15.2 安全与可靠性\n\n1. 用户输入、历史消息、文档正文和工具结果都视为不可信数据。\n2. 模型只能调用注册工具，不能扩大 KB/Asset 权限。\n3. 文档工具必须通过服务端范围校验，不能相信模型提供的 ID。\n4. KNOWLEDGE 只能引用当前 Run 的 Evidence Registry。\n5. 后端拒绝模型伪造的数字引用，只把合法 Segment Marker 渲染为可见引用。\n6. 异步任务使用 Lease、Owner 和条件更新防止重复认领与重复写入；这是任务并发保护，不代表整个应用支持多实例部署。\n7. Agent Run 创建前和 Turn 保存前都会锁定未删除会话，避免会话删除与 Run/回答落库竞态。\n8. 异步阶段分配 Trace Order 时锁定 Run；Run 不存在时跳过写入，避免新增孤立 Step。\n9. Run 与 Task 的终态更新校验预期源状态，避免并发完成、取消和迟到写入互相覆盖。\n10. 删除会话时取消活动 Run/Task，并删除相关 Trace 与 Task 记录。\n11. Redis 快照不参与权限或业务终态判断，MySQL 仍是权威来源。",
+        "source_lines": [
+          721,
+          733
+        ]
+      }
+    ]
+  }
+]

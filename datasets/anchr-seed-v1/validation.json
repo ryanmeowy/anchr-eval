@@ -1,0 +1,24 @@
+{
+  "status": "passed",
+  "checks": [
+    "10 unique question IDs",
+    "all six requested categories",
+    "all gold quotes are exact substrings of frozen page sources",
+    "all fact references resolve to supporting evidence",
+    "all evidence documents are in question scope",
+    "PDF page counts match source page maps",
+    "all 17 quotes match actual PDF page text after whitespace/Markdown normalization"
+  ],
+  "question_count": 10,
+  "document_count": 4,
+  "pdf_page_count": 8,
+  "evidence_count": 17,
+  "answerable_count": 8,
+  "visual_qa_record": "review/visual-qa.json",
+  "pending": [
+    "live API ingestion identifiers",
+    "actual segment quote coverage",
+    "user gold-label review",
+    "evaluation run"
+  ]
+}

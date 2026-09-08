@@ -1,0 +1,36 @@
+[
+  {
+    "title": "重建约束",
+    "parts": [
+      {
+        "source_doc_id": "D003",
+        "text": "## 1. 目标与约束\n\n在线重建用于在 Embedding 模型、向量维度或向量空间配置变化时，把当前\nSegment 索引迁移到新的物理索引。\n\n当前约束：\n\n- 只支持单 JVM、单租户。\n- 旧物理索引在重建期间继续承担读写，是迁移过程中的权威数据源。\n- 新物理索引是未绑定 alias 的影子索引，对线上查询不可见。\n- 普通写入不同步调用目标模型，也不直接双写影子索引；旧索引写入成功后只登记\n  `assetId` 为 dirty。\n- dirty 集合、mutation sequence 和回填位置只保存在内存中。\n- 重建失败或切换前进程重启时整次重来，不从断点恢复。\n- 读请求始终通过 read alias，重建期间不停读。\n- 写请求只在建立捕获边界和最终切换的短独占窗口内等待。\n\n核心不变量：\n\n1. alias 切换前，旧索引是线上数据和增量追平的唯一权威来源。\n2. 影子索引未对外服务，因此 Asset 同步的删除、重新生成和写入不要求对线上原子。\n3. alias 切换时，dirty 集合必须为空，且 mutation sequence 必须与锁外校验时一致。\n4. 写入新索引的向量 fingerprint 必须与新索引 metadata 中的 fingerprint 一致。\n5. `replaceGeneration` 的旧 generation 删除和新 Segment 写入不能被 alias 切换拆开。",
+        "source_lines": [
+          6,
+          29
+        ]
+      }
+    ]
+  },
+  {
+    "title": "向量指纹与重启语义",
+    "parts": [
+      {
+        "source_doc_id": "D003",
+        "text": "当前 fingerprint 使用 SHA-256，由以下字段按规范化结果生成：\n\n- capability；\n- 去除末尾 `/` 的 base URL；\n- model name；\n- `dimensions`。\n\nAPI Key 不进入 fingerprint，也不写入索引 metadata。除 `dimensions` 外的其他\n`extraConfig` 当前不参与 fingerprint。",
+        "source_lines": [
+          133,
+          141
+        ]
+      },
+      {
+        "source_doc_id": "D003",
+        "text": "重启语义：\n\n- alias 切换前重启：dirty 集合和进度丢失，未绑定 alias 的 BUILDING 目标被清理，\n  后续重新发起完整重建。\n- alias 已切换但 profile 尚未激活时重启：alias 指向索引仍为 SWITCHING，启动逻辑\n  根据 metadata 补做 profile 激活。\n- ACTIVE metadata 更新失败不影响已完成的 alias/profile 切换，启动检查仍以 alias\n  指向的物理索引为准。\n\n## 15. 旧索引与回滚\n\n成功切换后不会立即删除旧物理索引。它只保留为切换时刻的静态快照，因为正常写入\n已经停止向它登记和同步后续增量。\n\n不能直接把 alias 切回旧索引作为安全回滚。需要回滚时，必须先把切换后的新增、\n更新和删除同步回旧索引，或者以当前新索引为源重新构建另一个目标索引。",
+        "source_lines": [
+          518,
+          533
+        ]
+      }
+    ]
+  }
+]

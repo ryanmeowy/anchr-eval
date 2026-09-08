@@ -1,0 +1,114 @@
+{
+  "status": "pending_ingestion",
+  "api_base_url": null,
+  "kb_id": null,
+  "documents": {
+    "D001": {
+      "asset_id": null,
+      "document_sha256": "bfe5fb21e7ca9715bc638e467002c878d82584bae235346f98c7e4d3f85c3c5f",
+      "index_generation": null
+    },
+    "D002": {
+      "asset_id": null,
+      "document_sha256": "da556807f30a93dfeb9404615b0d1cd24a9c89e75e003b8a2532b23a41facb23",
+      "index_generation": null
+    },
+    "D003": {
+      "asset_id": null,
+      "document_sha256": "ed4f4e7f0432301a9bf1e6bc52a39e8a3b6f8e7d133d8e3c0978dfef8a7a1ec8",
+      "index_generation": null
+    },
+    "D004": {
+      "asset_id": null,
+      "document_sha256": "d139d5439d13ace2c5a986a51ffffae18c9c6079036e2b42fbbbfdd697d89146",
+      "index_generation": null
+    }
+  },
+  "evidence": {
+    "E001": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E002": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E003": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E004": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E005": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E006": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E007": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E008": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E009": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E010": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E011": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E012": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E013": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E014": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E015": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E016": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    },
+    "E017": {
+      "segment_ids": null,
+      "index_generation": null,
+      "verified_quote_coverage": false
+    }
+  }
+}
