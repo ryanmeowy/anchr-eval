@@ -1,22 +1,31 @@
 # anchr-eval
 
-通过 Anchr App REST API 进行离线测评。当前已完成第一批测评资料、10 道题、资料入库、证据绑定、可恢复的批量执行和基于明确复核标注的离线评分。第一轮 10 题基线已经保存，版本对比与优化实验尚未实施。
+Offline evaluation over the Anchr App REST API. The first evaluation round is in place: the
+source material, 10 cases, ingestion, evidence binding, resumable batch execution, and offline
+scoring driven by explicit review annotations. The first 10-case baseline is saved; version
+comparison and optimisation experiments are not implemented yet.
 
-从 [测评数据说明](datasets/anchr-seed-v1/README.md) 开始，或直接阅读 [10 道题及参考答案](datasets/anchr-seed-v1/review/questions.md)。
+Start with the [evaluation dataset notes](datasets/anchr-seed-v1/README.md), or go straight to
+the [10 cases and their reference answers](datasets/anchr-seed-v1/review/questions.md).
 
-上传用 PDF 位于 `output/pdf/`。题目、参考答案、标注和完整来源快照仅保留在测评端，不应上传到被测知识库。
+The PDFs used for upload live in `output/pdf/`. Cases, reference answers, annotations, and the
+full source snapshot stay on the evaluation side only — they must never be uploaded into the
+knowledge base under test.
 
-## 安装与配置
+## Install and configure
 
-使用 Python 3.11 或更高版本：
+Python 3.11 or newer:
 
 ```bash
 uv sync
 ```
 
-在项目根目录的 `.env` 中配置 `ANCHR_BASE_URL` 和 `ANCHR_ACCESS_TOKEN`，格式参考 `.env.example`。当前已经保存用户提供的本地配置，文件权限为仅当前用户可读写，且被 `.gitignore` 排除。环境变量优先于 `.env`；Token 不写入报告。
+Set `ANCHR_BASE_URL` and `ANCHR_ACCESS_TOKEN` in `.env` at the project root; see `.env.example`
+for the format. A local configuration has already been saved: the file is readable and writable
+by the current user only, and is excluded by `.gitignore`. Environment variables take precedence
+over `.env`; the token is never written into reports.
 
-## 已实现命令
+## Commands that exist today
 
 ```bash
 uv run anchr-eval validate
@@ -31,29 +40,82 @@ uv run anchr-eval score --name baseline-v1
 uv run pytest -q
 ```
 
-请从项目根目录运行，或通过 `--root` 显式指定项目路径。
+Run these from the project root, or point at the project explicitly with `--root`.
 
-- `validate` 检查题目 ID 与四份上传 PDF 的 SHA-256。
-- `doctor` 只读检查令牌角色与会话能力，结果保存到 `runs/setup/doctor.json`。
-- `ingest` 创建或复用带专用说明标记的知识库，通过临时 STS 凭据向服务配置的 OSS 上传四份 PDF，再提交带 `clientRequestId` 的入库任务。
-- `status` 单次查询任务与文档状态，不自动重试失败任务。
-- `bind` 在四份文档均为 `ANSWERABLE` 后执行证据检索，并逐个调用预览接口核验真实片段。只接受同页完整摘录匹配；跨片段、表格重排或解析文本差异保留 `needs_review`。最多三个并发只读探测；探测可能触发服务内部改写和追问生成，但不计入测评结果。
-- `review-bindings` 在本地应用 `runs/setup/binding-review.json` 中逐条写明的来源复核。校验服务、文档哈希、原文哈希、页码、片段正文哈希和实际摘录后，输出 `bindings.reviewed.json` 与派生的 `cases.bound.jsonl`；原始 `cases.jsonl` 不变。定位成功但关键字符缺失的证据仍标为 `located_text_partial`，不会升级成文本完整。
-- `smoke` 为指定题目执行一次检索与普通 RAG 问答，显式限定文档，每次新建会话。原始响应、耗时、范围和绑定快照保存到独立 `runs/smoke-.../`。未自动判分，也不把缺失的 Token 用量或费用记为零。
-- `batch` 按顺序执行全部十题，保存每题执行意图与结果。已有完整结果会复用；存在结果不确定的写请求时停止并要求先核对，不盲目重复调用。首次建立基线时用 `--reuse-run runs/smoke-20f868cf-6889-45c7-b686-eedec5370822` 复用了已完成的第一题；之后直接运行同名 batch 会复用全部结果。
-- `score` 校验 `runs/<批次名>/review.json` 与实际答案哈希、题目事实、引用数量一致，再离线汇总 `scores.json`。评分依据逐题明确复核，不把接口返回成功直接算为正确；无效实验样本单列，澄清题与无答案题分别汇总。
-- `retry-failed` 仅在故障原因已经排除且入库任务终止后，由用户显式执行，复用原任务重试失败项，不重新上传资料。
+- `validate` checks case IDs and the SHA-256 of the four uploaded PDFs.
+- `doctor` performs a read-only check of the token role and session capabilities, and writes the
+  result to `runs/setup/doctor.json`.
+- `ingest` creates or reuses a knowledge base marked with a dedicated description tag, uploads
+  the four PDFs to the OSS configured by the service using temporary STS credentials, then
+  submits an ingestion task carrying a `clientRequestId`.
+- `status` queries task and document status once; it does not retry failed tasks automatically.
+- `bind` runs evidence retrieval once all four documents are `ANSWERABLE`, and verifies every
+  candidate by calling the preview endpoint for each one. It accepts only full-excerpt matches
+  on the same page; cross-chunk hits, reflowed tables, and parsed-text differences stay marked
+  `needs_review`. At most three concurrent read-only probes; a probe may trigger the service's
+  internal query rewriting and follow-up generation, but that is not counted in the evaluation
+  result.
+- `review-bindings` applies the per-item source review written in `runs/setup/binding-review.json`
+  locally. After validating the service, document hash, source-text hash, page number, chunk-text
+  hash, and the actual excerpt, it writes `bindings.reviewed.json` plus a derived
+  `cases.bound.jsonl`; the original `cases.jsonl` is left untouched. Evidence that was located
+  but is missing key characters stays marked `located_text_partial` and is never upgraded to
+  full-text.
+- `smoke` runs one retrieval and one plain RAG question for a given case, explicitly scoped to
+  documents, in a fresh session each time. The raw response, latency, scope, and binding snapshot
+  are saved under their own `runs/smoke-.../`. Nothing is scored automatically, and missing token
+  usage or cost is not recorded as zero.
+- `batch` runs all ten cases in order, saving each case's execution intent and result. Complete
+  results are reused; if a write request has an uncertain result it stops and asks you to check
+  first rather than blindly repeating the call. The baseline was first established with
+  `--reuse-run runs/smoke-20f868cf-6889-45c7-b686-eedec5370822` to reuse the already-finished
+  first case; running a batch under the same name afterwards reuses all results.
+- `score` checks that `runs/<batch-name>/review.json` matches the actual answer hashes, the case
+  facts, and the citation counts, then aggregates `scores.json` offline. Scoring follows an
+  explicit per-case review and never treats a successful API response as a correct answer;
+  invalid experiment samples are listed separately, and clarification cases and unanswerable
+  cases are aggregated separately.
+- `retry-failed` is run explicitly by the user only after the failure cause has been cleared and
+  the ingestion task has reached a terminal state. It retries the failed items by reusing the
+  original task and does not re-upload the material.
 
-入库进度保存在 `runs/setup/ingestion.json`，不包含访问令牌或 STS 密钥。提交结果不确定时再次执行 `ingest` 会先按同一 `clientRequestId` 查回任务，不盲目重复提交；若查回失败，需要核对服务端状态后处理。已经上传但尚未提交的对象不会被自动删除。
+Ingestion progress is saved in `runs/setup/ingestion.json`, which contains no access token or
+STS secret. If a submission's result is uncertain, running `ingest` again first looks the task up
+by the same `clientRequestId` instead of blindly re-submitting; if that lookup fails, you need to
+check the server state before proceeding. Objects that were uploaded but never submitted are not
+deleted automatically.
 
-客户端识别 HTTP 状态与业务响应 `code` 两层错误，不跟随携带令牌的重定向，也不自动重试创建会话、知识库、消息等写入请求。当前 REST 合同依据本地 anchr-app 代码，线上完整入库流程需实际验证。
+The client distinguishes errors at two layers — the HTTP status and the business response `code`
+— does not follow redirects that carry the token, and does not automatically retry write requests
+such as creating sessions, knowledge bases, or messages. The current REST contract is based on
+the local anchr-app code; the full online ingestion flow still needs to be verified for real.
 
-## 当前进度与限制
+## Current progress and limitations
 
-已修复 Docling 的 Tailscale 访问链路，原任务四份 PDF 均入库成功，共 24 个片段。17 条证据均已定位到真实片段：6 条严格匹配、8 条按来源复核为等价、3 条存在解析文本缺失。实际 ID 和最新状态见 `runs/setup/`；带真实 ID 的派生题目为 [cases.bound.jsonl](runs/setup/cases.bound.jsonl)。来源复核由 Codex 完成，尚未经过独立人工审核。
+The Docling Tailscale access path has been fixed, all four PDFs from the original task ingested
+successfully, for 24 chunks in total. All 17 evidence items were located against real chunks:
+6 exact matches, 8 confirmed equivalent by source review, and 3 with missing parsed text. Actual
+IDs and current status are in `runs/setup/`; the derived cases carrying real IDs are in
+[cases.bound.jsonl](runs/setup/cases.bound.jsonl). The source review was performed by Codex and
+has not been through independent human review.
 
-第一轮 10 题均完成普通 RAG 调用，10 个持久化回答均与即时响应一致。基于 Codex 的严格来源复核，9 道有效题通过 2 道，第010题因文档攻击文本失真单列；该复核不是独立人工盲审。详见 [完整基线报告](reports/baseline-v1.md)、[首次试跑报告](reports/seed-smoke-001.md) 与 [故障修复记录](docs/first-ingestion-incident.md)。10题规模较小，延迟百分位仅描述本次样本。
+All ten cases in the first round completed a plain RAG call, and all ten persisted answers match
+the immediate responses. Under Codex-driven strict source review, 2 of the 9 valid cases passed;
+case 010 is listed separately because adversarial text in the document corrupted it. That review
+is not an independent human blind review. See the [full baseline report](reports/baseline-v1.md),
+the [first trial-run report](reports/seed-smoke-001.md), and the
+[incident write-up](docs/first-ingestion-incident.md). Ten cases is a small sample, so the latency
+percentiles describe this run only.
 
-现有 `AssetDTO` 和片段预览 DTO 不公开 generation 数值。绑定中明确保留 `index_generation=null`，不把 `versionNo` 冒充索引 generation。预览接口在当前本地实现中检查片段是否属于 active generation，但这只能作为绑定时点的有效性证据；严格的版本复现还需补充服务版本及索引配置快照。正式片段指标不可把试跑结果当成已验证基线。
+The existing `AssetDTO` and chunk preview DTO do not expose generation values. Bindings
+deliberately keep `index_generation=null` and do not pass `versionNo` off as an index generation.
+In the current local implementation the preview endpoint checks whether a chunk belongs to the
+active generation, but that is only evidence of validity at the moment of binding; strict version
+reproducibility still needs a server version and index configuration snapshot. Official chunk
+metrics must not treat trial-run results as a verified baseline.
 
-本次索引模型/维度/fingerprint、分块参数、检索参数和生成模型名称已保存在 `runs/setup/server-snapshot.json`，不包含凭据；线上 Git commit 仍不可用。已有复核仅适用于捕获时的片段正文；重建分块或重新解析后，应重新绑定和复核。
+The index model / dimensions / fingerprint, chunking parameters, retrieval parameters, and
+generation model name for this run are saved in `runs/setup/server-snapshot.json`, which contains
+no credentials; the online Git commit is still unavailable. The existing review applies only to
+the chunk text as captured at that moment — after re-chunking or re-parsing, binding and review
+must be redone.
